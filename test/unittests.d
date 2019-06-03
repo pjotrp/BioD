@@ -47,18 +47,19 @@ import bio.core.base;
 import bio.core.tinymap;
 import bio.core.utils.roundbuf;
 
-import std.path;
-import std.range;
-import std.stdio;
-import undead.stream;
+import core.memory;
 import std.algorithm;
 import std.array;
 import std.conv;
 import std.exception;
 import std.math;
-import std.typetuple;
+import std.path;
+import std.range;
+import std.stdio;
 import std.regex;
-
+import std.typetuple;
+import undead.stream;
+ 
 CigarOperation[] cigarFromString(string cigar) {
     return match(cigar, regex(`(\d+)([A-Z=])`, "g")).map!(m => CigarOperation(m[1].to!uint, m[2].to!char)).array;
 }
@@ -82,6 +83,10 @@ unittest {
     assert(bf.header.read_groups.length == 0);
     assert(bf.header.getSequenceIndex("large") == 2);
     assert(bf.header.sequences["small"].length == 65536);
+
+   
+    stderr.writeln("Run GC ",__FILE__,":",__LINE__);
+    core.memory.GC.collect();
 
     {
     // stderr.writeln("Testing alignment parsing...");
@@ -140,6 +145,9 @@ unittest {
     fn = buildPath(dirName(__FILE__), "data", "corrupted_zlib_archive.bam");
     import bio.core.utils.zlib;
     assertThrown!ZlibException(walkLength((new BamReader(fn)).reads));
+
+    stderr.writeln("Run GC ",__FILE__,":",__LINE__);
+    core.memory.GC.collect();
 
     // stderr.writeln("Testing random access...");
     fn = buildPath(dirName(__FILE__), "data", "bins.bam");
@@ -248,6 +256,10 @@ unittest {
     v.setHexadecimalFlag();
     assert(v.is_hexadecimal_string);    
     assert(v == "0eabcf123");
+
+    stderr.writeln("Run GC ",__FILE__,":",__LINE__);
+    core.memory.GC.collect();
+
 
     // stderr.writeln("Testing parseAlignmentLine/toSam functions...");
     fn = buildPath(dirName(__FILE__), "data", "ex1_header.bam");
@@ -361,6 +373,9 @@ unittest {
         }
     }
 
+    stderr.writeln("Run GC ",__FILE__,":",__LINE__);
+    core.memory.GC.collect();
+
     // stderr.writeln("Testing basesWith functionality...");
     {
         fn = buildPath(dirName(__FILE__), "data", "mg1655_chunk.bam");
@@ -431,6 +446,10 @@ unittest {
             }
         }
     }
+
+    stderr.writeln("Run GC ",__FILE__,":",__LINE__);
+    core.memory.GC.collect();
+
 
     // stderr.writeln("Testing extended CIGAR conversion...");
 

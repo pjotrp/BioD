@@ -203,6 +203,11 @@ auto memoize(alias func, uint maxItems=1024,
 }
 
 unittest {
+    import core.memory;
+
+    stderr.writeln("Run GC ",__FILE__,":",__LINE__);
+    core.memory.GC.collect();
+
 
     import core.thread;
 
@@ -269,4 +274,10 @@ unittest {
     lumemoize(4); // 5 -> 4
     lumemoize(9); // 4 -> 9
     assert(evaluations == 8);
+
+    import core.memory;
+
+    stderr.writeln("Run GC ",__FILE__,":",__LINE__);
+    core.memory.GC.collect();
+
 }

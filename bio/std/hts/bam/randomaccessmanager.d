@@ -169,7 +169,7 @@ class RandomAccessManager {
         stream.seekSet(offset);
         BgzfBlock block = void;
         ubyte[BGZF_MAX_BLOCK_SIZE] buf = void;
-        fillBgzfBufferFromStream(stream, true, &block, buf.ptr);
+        fillBgzfBufferFromStream(stream, true, &block, BGZF_MAX_BLOCK_SIZE, buf.ptr);
         block._buffer = block._buffer.dup;
         return block;
     }

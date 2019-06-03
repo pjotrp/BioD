@@ -28,9 +28,10 @@ import bio.core.utils.memoize;
 import bio.core.utils.zlib;
 
 import std.array;
-import std.conv;
 import std.algorithm;
+import std.conv;
 import std.exception;
+import std.stdio;
 
 /**
   Structure representing BGZF block.
@@ -96,6 +97,9 @@ struct BgzfBlock {
   and yet be able to decompress blocks in parallel.
  */
 struct DecompressedBgzfBlock {
+    ~this() { 
+      stderr.writeln("destroy DecompressedBgzfBlock ",start_offset,":",end_offset," ",decompressed_data.sizeof);
+    };
     ulong start_offset;
     ulong end_offset;
     ubyte[] decompressed_data;
@@ -108,21 +112,25 @@ alias Cache!(BgzfBlock, DecompressedBgzfBlock) BgzfBlockCache;
 /// Reuses buffer allocated for storing compressed data,
 /// i.e. after execution buffer of the passed $(D block)
 /// is overwritten with uncompressed data.
-DecompressedBgzfBlock decompressBgzfBlock(BgzfBlock block,
+DecompressedBgzfBlock decompressBgzfBlock2(BgzfBlock block,
                                           BgzfBlockCache cache=null)
 {
+    stderr.writeln("enter decompressBgzfBlock2");
     if (block.input_size == 0) {
+        stderr.writeln("Block size 0");
         return DecompressedBgzfBlock(block.start_offset, 
                                      block.start_offset + block.bsize + 1,
                                      cast(ubyte[])[]); // EOF marker
         // TODO: add check for correctness of EOF marker
     }
 
+/*
     if (cache !is null) {
         auto ptr = cache.lookup(block);
         if (ptr !is null)
             return *ptr;
     }
+*/
 
     int err = void;
 
@@ -169,6 +177,7 @@ DecompressedBgzfBlock decompressBgzfBlock(BgzfBlock block,
 
     assert(block.crc32 == crc32(0, uncompressed[]));
 
+/*
     if (cache !is null) {
         BgzfBlock compressed_bgzf_block = block;
         compressed_bgzf_block._buffer = block._buffer.dup;
@@ -180,10 +189,11 @@ DecompressedBgzfBlock decompressBgzfBlock(BgzfBlock block,
         }
         cache.put(compressed_bgzf_block, decompressed_bgzf_block);
     }
+*/
 
     // Now copy back to block._buffer, overwriting existing data.
     // It should have enough bytes already allocated.
-    assert(block._buffer.length >= block.input_size);
+    enforce(block._buffer.length >= block.input_size);
     version(extraVerbose) {
         import std.stdio;
         stderr.writeln("[uncompressed] [write] range: ", block._buffer.ptr,
@@ -191,7 +201,17 @@ DecompressedBgzfBlock decompressBgzfBlock(BgzfBlock block,
     }
     block._buffer[0 .. block.input_size] = uncompressed[];
     block.dirty = true;
+    stderr.writeln("exit decompressBgzfBlock2");
 
     return DecompressedBgzfBlock(block.start_offset, block.end_offset,
                                  block._buffer[0 .. block.input_size]);
+}
+
+
+unittest {
+    import std.stdio;
+    import core.memory;
+
+    stderr.writeln("Run GC ",__FILE__,":",__LINE__);
+    core.memory.GC.collect();
 }

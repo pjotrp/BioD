@@ -449,3 +449,12 @@ struct BgzfStream {
 
   T[] read(T)(T[] buffer) { return cast(T[])fetch(cast(ubyte[])buffer); };
 }
+
+unittest {
+    import std.stdio;
+    import core.memory;
+    
+    stderr.writeln("Run GC ",__FILE__,":",__LINE__);
+    core.memory.GC.collect();
+}   
+
